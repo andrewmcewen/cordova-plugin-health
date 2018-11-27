@@ -108,7 +108,7 @@ define('saveWorkout', {required: 'startDate'}, function(options) {
 });
 
 define('monitorSampleType', {required: 'sampleType'});
-define('querySampleType', {required: 'sampleType'}, hasValidDates);
+// define('querySampleType', {required: 'sampleType'}, hasValidDates);
 
 define('querySampleTypeAggregated', {required: 'sampleType'}, hasValidDates);
 
