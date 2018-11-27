@@ -231,7 +231,7 @@ Health.prototype.query = function (opts, onSuccess, onError) {
       if (opts.dataType === 'activity') {
         // get sleep analysis also
         opts.sampleType = 'HKCategoryTypeIdentifierSleepAnalysis';
-        window.plugins.healthkit.querySampleType(opts, (data) => {
+        window.plugins.healthkit.querySampleType(opts, function (data) {
           for (var i = 0; i < data.length; i++) {
             var res = {};
             res.startDate = new Date(data[i].startDate);
@@ -247,7 +247,7 @@ Health.prototype.query = function (opts, onSuccess, onError) {
 
           // get mindfulness analysis also 
           opts.sampleType = 'HKCategoryTypeIdentifierMindfulSession';
-          window.plugins.healthkit.querySampleType(opts, (data) => {
+          window.plugins.healthkit.querySampleType(opts, function (data) {
             for (var i = 0; i < data.length; i++) {
               var res = {};
               res.startDate = new Date(data[i].startDate);
