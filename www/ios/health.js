@@ -245,8 +245,6 @@ Health.prototype.query = function (opts, onSuccess, onError) {
             result.push(res);
           }
 
-          console.log('QUERIED SLEEP');
-
           // get mindfulness analysis also 
           opts.sampleType = 'HKCategoryTypeIdentifierMindfulSession';
           window.plugins.healthkit.querySampleType(opts, (data) => {
@@ -254,14 +252,12 @@ Health.prototype.query = function (opts, onSuccess, onError) {
               var res = {};
               res.startDate = new Date(data[i].startDate);
               res.endDate = new Date(data[i].endDate);
-              res.unit = 'activityType';
               res.value = 'mindfulness';
+              res.unit = 'activityType';
               res.sourceName = data[i].sourceName;
               res.sourceBundleId = data[i].sourceBundleId;
               result.push(res);
             }
-            
-            console.log('QUERIED MINDFULNESS');
 
             onSuccess(result);
           }, onError)
