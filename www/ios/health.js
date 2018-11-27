@@ -234,6 +234,8 @@ Health.prototype.query = function (opts, onSuccess, onError) {
         opts.sampleType = 'HKCategoryTypeIdentifierSleepAnalysis';
         opts.startDate = startD;
         opts.endDate = endD;
+        console.log(endD);
+        console.log(startD);
         console.log(opts);
         window.plugins.healthkit.querySampleType(opts, function (data) {
           console.log(data);
