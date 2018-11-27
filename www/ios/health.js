@@ -14,7 +14,7 @@ dataTypes['height'] = 'HKQuantityTypeIdentifierHeight';
 dataTypes['weight'] = 'HKQuantityTypeIdentifierBodyMass';
 dataTypes['heart_rate'] = 'HKQuantityTypeIdentifierHeartRate';
 dataTypes['fat_percentage'] = 'HKQuantityTypeIdentifierBodyFatPercentage';
-dataTypes['activity'] = 'HKWorkoutTypeIdentifier'; // and HKCategoryTypeIdentifierSleepAnalysis
+dataTypes['activity'] = 'HKWorkoutTypeIdentifier'; // and HKCategoryTypeIdentifierSleepAnalysis and HKCategoryTypeIdentifierMindfulSession
 dataTypes['workouts'] = 'HKWorkoutTypeIdentifier';
 dataTypes['nutrition'] = 'HKCorrelationTypeIdentifierFood';
 dataTypes['nutrition.calories'] = 'HKQuantityTypeIdentifierDietaryEnergyConsumed';
@@ -96,7 +96,10 @@ var getHKDataTypes = function (dtArr) {
       } else if (dataTypes[dtArr[i]]) {
         HKDataTypes.push(dataTypes[dtArr[i]]);
         if (dtArr[i] === 'distance') HKDataTypes.push('HKQuantityTypeIdentifierDistanceCycling');
-        if (dtArr[i] === 'activity') HKDataTypes.push('HKCategoryTypeIdentifierSleepAnalysis');
+        if (dtArr[i] === 'activity') {
+          HKDataTypes.push('HKCategoryTypeIdentifierSleepAnalysis');
+          HKDataTypes.push('HKCategoryTypeIdentifierMindfulSession');
+        }
         if (dtArr[i] === 'calories') HKDataTypes.push('HKQuantityTypeIdentifierBasalEnergyBurned');
       } else {
         // return the not found dataType instead of array
@@ -200,7 +203,7 @@ Health.prototype.query = function (opts, onSuccess, onError) {
       res[0] = {
         startDate: opts.startDate,
         endDate: opts.endDate,
-        value: {day: date.getDate(), month: date.getMonth() + 1, year: date.getFullYear()},
+        value: { day: date.getDate(), month: date.getMonth() + 1, year: date.getFullYear() },
         sourceName: 'Health',
         sourceBundleId: 'com.apple.Health'
       };
@@ -219,7 +222,7 @@ Health.prototype.query = function (opts, onSuccess, onError) {
           res.value = data[i].activityType;
           res.unit = 'activityType';
           if (data[i].energy) res.calories = parseInt(data[i].energy.slice(0, -2)); // remove the ending J
-          if (data[i].distance)  res.distance = parseInt(data[i].distance);
+          if (data[i].distance) res.distance = parseInt(data[i].distance);
           res.sourceName = data[i].sourceName;
           res.sourceBundleId = data[i].sourceBundleId;
           result.push(res);
@@ -228,7 +231,7 @@ Health.prototype.query = function (opts, onSuccess, onError) {
       if (opts.dataType === 'activity') {
         // get sleep analysis also
         opts.sampleType = 'HKCategoryTypeIdentifierSleepAnalysis';
-        window.plugins.healthkit.querySampleType(opts, function (data) {
+        window.plugins.healthkit.querySampleType(opts, (data) => {
           for (var i = 0; i < data.length; i++) {
             var res = {};
             res.startDate = new Date(data[i].startDate);
@@ -241,8 +244,26 @@ Health.prototype.query = function (opts, onSuccess, onError) {
             res.sourceBundleId = data[i].sourceBundleId;
             result.push(res);
           }
-          onSuccess(result);
+
+          // get mindfulness analysis also 
+          opts.sampleType = 'HKCategoryTypeIdentifierMindfulSession';
+          window.plugins.healthkit.querySampleType(opts, (data) => {
+            for (var i = 0; i < data.length; i++) {
+              var res = {};
+              res.startDate = new Date(data[i].startDate);
+              res.endDate = new Date(data[i].endDate);
+              res.unit = 'activityType';
+              res.value = 'mindfulness';
+              res.sourceName = data[i].sourceName;
+              res.sourceBundleId = data[i].sourceBundleId;
+              result.push(res);
+            }
+            onSuccess(result);
+          }, onError)
+
         }, onError);
+
+
       } else onSuccess(result);
     }, onError);
   } else if (opts.dataType === 'nutrition' || opts.dataType === 'blood_pressure') {
@@ -254,7 +275,7 @@ Health.prototype.query = function (opts, onSuccess, onError) {
       correlationType: dataTypes[opts.dataType]
     }
     if (units[opts.dataType].constructor.name == "Array") qops.units = units[opts.dataType];
-    else qops.units = [ units[opts.dataType] ];
+    else qops.units = [units[opts.dataType]];
 
     window.plugins.healthkit.queryCorrelationType(qops, function (data) {
       for (var i = 0; i < data.length; i++) {
@@ -279,7 +300,7 @@ Health.prototype.query = function (opts, onSuccess, onError) {
               glucose: samples[i].quantity
             }
             if (samples[i].metadata && samples[i].metadata.HKBloodGlucoseMealTime) {
-              if(samples[i].metadata.HKBloodGlucoseMealTime == 1) res.value.meal = 'before_meal'
+              if (samples[i].metadata.HKBloodGlucoseMealTime == 1) res.value.meal = 'before_meal'
               else res.value.meal = 'after_meal'
             }
             if (samples[i].metadata && samples[i].metadata.HKMetadataKeyBloodGlucoseMealTime) res.value.meal = samples[i].metadata.HKMetadataKeyBloodGlucoseMealTime; // overwrite HKBloodGlucoseMealTime
@@ -290,7 +311,7 @@ Health.prototype.query = function (opts, onSuccess, onError) {
               insulin: samples[i].quantity
             }
             if (samples[i].metadata && samples[i].metadata.HKInsulinDeliveryReason) {
-              if(samples[i].metadata.HKInsulinDeliveryReason == 1) res.value.reason = 'basal'
+              if (samples[i].metadata.HKInsulinDeliveryReason == 1) res.value.reason = 'basal'
               else res.value.reason = 'bolus'
             }
             if (samples[i].metadata && samples[i].metadata.HKMetadataKeyInsulinDeliveryReason) res.value.reason = samples[i].metadata.HKMetadataKeyInsulinDeliveryReason; // overwrite HKInsulinDeliveryReason
@@ -331,10 +352,10 @@ Health.prototype.query = function (opts, onSuccess, onError) {
 
 Health.prototype.queryAggregated = function (opts, onSuccess, onError) {
   if ((opts.dataType !== 'steps') && (opts.dataType !== 'distance') &&
-  (opts.dataType !== 'calories') && (opts.dataType !== 'calories.active') &&
-  (opts.dataType !== 'calories.basal') && (opts.dataType !== 'activity') &&
-  (opts.dataType !== 'workouts') && (!opts.dataType.startsWith('nutrition')) &&
-  (opts.dataType !== 'appleExerciseTime')) {
+    (opts.dataType !== 'calories') && (opts.dataType !== 'calories.active') &&
+    (opts.dataType !== 'calories.basal') && (opts.dataType !== 'activity') &&
+    (opts.dataType !== 'workouts') && (!opts.dataType.startsWith('nutrition')) &&
+    (opts.dataType !== 'appleExerciseTime')) {
     // unsupported datatype
     onError('Datatype ' + opts.dataType + ' not supported in queryAggregated');
     return;
@@ -445,9 +466,9 @@ Health.prototype.store = function (data, onSuccess, onError) {
   } else if (data.dataType === 'activity') {
     // sleep activity, needs a different call than workout
     if ((data.value === 'sleep') ||
-    (data.value === 'sleep.light') ||
-    (data.value === 'sleep.deep') ||
-    (data.value === 'sleep.rem')) {
+      (data.value === 'sleep.light') ||
+      (data.value === 'sleep.deep') ||
+      (data.value === 'sleep.rem')) {
       data.sampleType = 'HKCategoryTypeIdentifierSleepAnalysis';
       data.value = 'HKCategoryValueSleepAnalysisAsleep';
       window.plugins.healthkit.saveSample(data, onSuccess, onError);
@@ -462,7 +483,7 @@ Health.prototype.store = function (data, onSuccess, onError) {
     } else {
       // some other kind of workout
       data.activityType = data.value;
-	  data.requestReadPermission = false // do not ask for read permission too
+      data.requestReadPermission = false // do not ask for read permission too
       if (data.calories) {
         data.energy = data.calories;
         data.energyUnit = 'kcal';
@@ -483,7 +504,7 @@ Health.prototype.store = function (data, onSuccess, onError) {
     for (var nutrientName in data.value.nutrients) {
       var unit = units[nutrientName];
       var sampletype = dataTypes[nutrientName];
-      if(! sampletype) {
+      if (!sampletype) {
         onError('Cannot recognise nutrition item ' + nutrientName);
         return;
       }
@@ -557,6 +578,8 @@ Health.prototype.delete = function (data, onSuccess, onError) {
     onError('Date of birth is not deletable');
   } else if ((data.dataType === 'activity') && (data.dataType.lastIndexOf('sleep', 0) === 0)) {
     data.sampleType = 'HKCategoryTypeIdentifierSleepAnalysis';
+  } else if ((data.dataType === 'activity') && (data.dataType.lastIndexOf('mindfulness', 0) === 0)) {
+    data.sampleType = 'HKCategoryTypeIdentifierMindfulSession';
   } else if (data.dataType === 'activity') {
     data.sampleType = 'workoutType';
   } else if ((data.dataType === 'distance') && data.cycling) {
