@@ -87,6 +87,7 @@ As HealthKit does not allow adding custom data types, only a subset of data type
 | Data type       | Unit  |    HealthKit equivalent                       |  Google Fit equivalent                   |
 |-----------------|-------|-----------------------------------------------|------------------------------------------|
 | steps           | count | HKQuantityTypeIdentifierStepCount             | TYPE_STEP_COUNT_DELTA                    |
+| stairs           | count | HKQuantityTypeIdentifierFlightsClimbed             | NA                    |
 | distance        | m     | HKQuantityTypeIdentifierDistanceWalkingRunning + HKQuantityTypeIdentifierDistanceCycling | TYPE_DISTANCE_DELTA |
 | appleExerciseTime | min | HKQuantityTypeIdentifierAppleExerciseTime     | NA                                       |
 | calories        | kcal  | HKQuantityTypeIdentifierActiveEnergyBurned + HKQuantityTypeIdentifierBasalEnergyBurned | TYPE_CALORIES_EXPENDED |
@@ -223,6 +224,7 @@ navigator.health.requestAuthorization(datatypes, successCallback, errorCallback)
 #### iOS quirks
 
 - The datatype `activity` also includes sleep. If you want to get authorization only for workouts, you can specify `workouts` as datatype, but be aware that this is only availabe in iOS.
+- Once the suer has allowed (or not allowed) the app, this function will not promt the user again, but will call the callback immediately. See [this](https://developer.apple.com/documentation/healthkit/hkhealthstore/1614152-requestauthorization) for further explanation.
 
 ### isAuthorized()
 
