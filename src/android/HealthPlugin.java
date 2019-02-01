@@ -90,8 +90,6 @@ public class HealthPlugin extends CordovaPlugin {
         activitydatatypes.put("calories", DataType.TYPE_CALORIES_EXPENDED);
         activitydatatypes.put("calories.basal", DataType.TYPE_BASAL_METABOLIC_RATE);
         activitydatatypes.put("activity", DataType.TYPE_ACTIVITY_SEGMENT);
-        activitydatatypes.put("stairs", DataType.TYPE_STAIR_CLIMBING);
-        activitydatatypes.put("stair_climbing", DataType.TYPE_STAIR_CLIMBING);
     }
 
     // Scope for read/write access to biometric data types in Google Fit. These include heart rate, height, and weight.
